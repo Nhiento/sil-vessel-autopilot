@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache/
 results/sil_results.db
 teardown-out/
+private/
