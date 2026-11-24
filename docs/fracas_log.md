@@ -1,6 +1,9 @@
 # FRACAS Log (Failure Reporting, Analysis, and Corrective Action)
 
-Failures found during the SIL campaign on build **v1.0**, traced to root cause, fixed in **v1.1**, and verified closed by re-test.
+This log documents failures identified during ASV-7
+software-in-the-loop testing, including root cause
+analysis, corrective actions, verification evidence,
+and closure status across autopilot software builds.
 
 ---
 
@@ -35,6 +38,96 @@ Failures found during the SIL campaign on build **v1.0**, traced to root cause, 
 | Status | **Closed** |
 
 ---
+
+## FR-003 — Stuck-rudder actuator failure not detected
+
+| Field | Detail |
+|---|---|
+| Date identified | November 23, 2026 |
+| Build | v1.1 |
+| Scenario | S07 — Stuck rudder during heading maneuver |
+| Requirement violated | REQ-FLT-004 — Detection within 2 seconds |
+| Measured detection latency | inf (fault never detected) |
+| Expected result | Fault detected by simulation time 22.0 s |
+| Actual result | No stuck-rudder fault flag raised |
+| Symptom | Commanded rudder changes to -35° while actual rudder remains frozen at +35° throughout the fault interval. |
+| Analysis | The controller continues issuing corrective steering commands without recognizing that the physical actuator cannot respond. |
+| Root cause | Missing actuator-position feedback in the controller interface and absence of dedicated stuck-rudder detection logic. |
+| System impact | Loss of effective steering control and significant heading deviation during the actuator failure. |
+| Proposed corrective action | Introduce rudder-position feedback, monitor expected versus observed actuator movement, and raise FAULT_STUCK_RUDDER when persistent nonresponse is detected. |
+| Target build | v1.2 |
+| Verification | Pending implementation and re-test of S07, followed by regression testing of S01–S06. |
+| Status | **OPEN** |
+
+### Test configuration
+
+- Initial heading: 0°
+- Initial speed: 10 knots
+- Heading command at 5 s: 90°
+- Heading command at 20 s: 0°
+- Physical fault interval: 20–40 s
+- Simulation duration: 120 s
+- Control loop frequency: 10 Hz
+
+### Supporting evidence
+
+| Metric | Measured value |
+|---|---|
+| Maximum absolute commanded rudder | 35.000° |
+| Frozen actual rudder position | +35.000° |
+| Maximum rudder tracking error | 70.000° |
+| Peak absolute heading error | 131.195° |
+| Peak absolute yaw rate | 4.179°/s |
+| Fault detection latency | inf |
+| REQ-ACT-001 | PASS |
+| REQ-FLT-004 | FAIL |
+
+### Root cause investigation
+
+The existing autopilot receives heading, yaw rate,
+and speed measurements but does not receive actual
+rudder-position feedback.
+
+Although the simulation records actual rudder position,
+this information is not supplied to the controller.
+
+The controller therefore has no dedicated mechanism
+to verify whether the steering actuator responds
+to its commands.
+
+### Proposed corrective action
+
+1. Extend the controller interface to accept actual
+   rudder-position feedback.
+2. Monitor commanded and observed actuator movement.
+3. Account for normal actuator movement-rate limitations.
+4. Detect persistent actuator nonresponse.
+5. Raise a dedicated FAULT_STUCK_RUDDER status.
+6. Preserve the behavior of previous software builds.
+7. Verify detection latency against REQ-FLT-004.
+8. Check for false alarms during normal steering.
+9. Re-run all baseline scenarios.
+
+### Verification closure criteria
+
+- S07 fault detection latency must not exceed 2.0 s.
+- REQ-ACT-001 must continue to pass.
+- All 17 baseline verification checks must remain
+  successful in v1.2.
+- No false stuck-rudder alarms in baseline scenarios.
+
+### Limitations
+
+Detecting a stuck actuator does not physically repair it.
+
+A real vessel would require additional fault mitigation,
+redundancy, or emergency operating procedures.
+
+The current corrective action focuses on fault detection
+within the simulated operating conditions.
+
+**Corrective action status: OPEN**
+
 
 ### Suggested next items (open)
 
