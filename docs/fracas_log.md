@@ -128,6 +128,7 @@ within the simulated operating conditions.
 
 **Corrective action status: OPEN**
 
+
 ## FR-004 — Noise-Induced Stuck-Rudder Detection Failure
 
 **Status:** OPEN
