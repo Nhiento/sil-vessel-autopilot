@@ -128,6 +128,33 @@ within the simulated operating conditions.
 
 **Corrective action status: OPEN**
 
+## FR-004 — Noise-Induced Stuck-Rudder Detection Failure
+
+**Status:** OPEN
+
+**Affected build:** v1.2
+
+**Discovery method:** Monte Carlo sensor noise robustness testing
+
+**Affected requirement:** REQ-FLT-004 under experimental noisy sensor conditions
+
+**Failure description:** Increasing rudder-position measurement noise causes delayed or missed stuck-rudder fault detection.
+
+**Evidence:**
+- 1,260 simulation runs
+- 180 fault injection trials
+- 63.33% deadline compliance at 0.025 degrees noise
+- 0% deadline compliance at 0.050 degrees noise and above
+- 80 missed detections across all noise configurations
+
+**Suspected root cause:** Consecutive-sample movement estimation is excessively sensitive to measurement noise, potentially causing repeated persistence timer resets.
+
+**Proposed corrective action:** Investigate noise-tolerant actuator movement estimation through filtering or window-based signal processing.
+
+**Verification plan:** Compare the improved detector against v1.2 using identical Monte Carlo configurations, additional independent random seeds, and full regression verification.
+
+**Closure criteria:** Establish a justified simulated noise operating envelope, demonstrate improved detection deadline compliance within that envelope, and preserve existing functional requirements without observed false stuck-rudder alarms in the defined verification suite.
+
 
 ### Suggested next items (open)
 
